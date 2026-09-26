@@ -84,4 +84,4 @@ python -m py_compile .\src\remote_log.py .\src\remote_runner.py
 python -m unittest discover -s tests -v
 ```
 
-版本：0.3.0
+版本：0.3.1

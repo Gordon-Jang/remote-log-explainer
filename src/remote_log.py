@@ -21,8 +21,39 @@ ANSI = {
     "dim": "\033[90m",
     "reset": "\033[0m",
 }
+WIN_FG = {
+    "ok": 0x0A,
+    "info": 0x0B,
+    "wait": 0x0D,
+    "warn": 0x0E,
+    "error": 0x0C,
+    "dim": 0x08,
+}
 ICONS = {"ok": "✓", "info": "•", "wait": "⏳", "warn": "⚠", "error": "✗", "dim": "·"}
 RAW_MODE = False
+VT_ENABLED = os.name != "nt"
+
+def enable_virtual_terminal() -> bool:
+    """Enable ANSI/VT color sequences on the current Windows console."""
+    global VT_ENABLED
+    if os.name != "nt":
+        VT_ENABLED = True
+        return True
+    try:
+        kernel32 = ctypes.windll.kernel32
+        enabled = False
+        for std_handle in (-11, -12):  # STDOUT / STDERR
+            handle = kernel32.GetStdHandle(std_handle)
+            mode = ctypes.c_uint()
+            if handle and kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+                if kernel32.SetConsoleMode(handle, mode.value | 0x0004):
+                    enabled = True
+        VT_ENABLED = enabled
+        return enabled
+    except Exception:
+        VT_ENABLED = False
+        return False
+
 SECRET_PATTERNS = [
     (re.compile(r"(?i)(authorization\s*[:=]\s*bearer\s+)[^\s\"']+"), r"\1***"),
     (re.compile(r"(?i)((?:api[_-]?key|token|password|secret)\s*[:=]\s*)[^\s,;\"']+"), r"\1***"),
@@ -189,14 +220,51 @@ def classify(record: Dict[str, Any]) -> Tuple[str, str, List[str]]:
         details.append("Git 换行符提示（LF/CRLF），通常不影响本次执行")
     return level, title, details[:3]
 def colorize(level: str, text: str) -> str:
-    if not sys.stdout.isatty() or os.environ.get("NO_COLOR"):
+    if not sys.stdout.isatty() or os.environ.get("NO_COLOR") or (os.name == "nt" and not VT_ENABLED):
         return text
     return ANSI.get(level, "") + text + ANSI["reset"]
+
+def print_colored(level: str, text: str, *, flush: bool = True) -> None:
+    if os.environ.get("NO_COLOR") or not sys.stdout.isatty():
+        print(text, flush=flush)
+        return
+    if os.name != "nt" or VT_ENABLED:
+        print(ANSI.get(level, "") + text + ANSI["reset"], flush=flush)
+        return
+    try:
+        class COORD(ctypes.Structure):
+            _fields_ = [("X", ctypes.c_short), ("Y", ctypes.c_short)]
+        class SMALL_RECT(ctypes.Structure):
+            _fields_ = [
+                ("Left", ctypes.c_short), ("Top", ctypes.c_short),
+                ("Right", ctypes.c_short), ("Bottom", ctypes.c_short),
+            ]
+        class CSBI(ctypes.Structure):
+            _fields_ = [
+                ("dwSize", COORD), ("dwCursorPosition", COORD),
+                ("wAttributes", ctypes.c_ushort), ("srWindow", SMALL_RECT),
+                ("dwMaximumWindowSize", COORD),
+            ]
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.GetStdHandle(-11)
+        info = CSBI()
+        if not kernel32.GetConsoleScreenBufferInfo(handle, ctypes.byref(info)):
+            print(text, flush=flush)
+            return
+        original = int(info.wAttributes)
+        foreground = WIN_FG.get(level, original & 0x0F)
+        kernel32.SetConsoleTextAttribute(handle, (original & 0xFFF0) | foreground)
+        try:
+            print(text, flush=flush)
+        finally:
+            kernel32.SetConsoleTextAttribute(handle, original)
+    except Exception:
+        print(text, flush=flush)
 
 def render_summary(level: str, title: str, details: Iterable[str], stamp: str | None = None) -> None:
     stamp = stamp or datetime.now().astimezone().strftime("%H:%M:%S")
     icon = ICONS.get(level, "•")
-    print(colorize(level, f"{stamp}  {icon} {title}"), flush=True)
+    print_colored(level, f"{stamp}  {icon} {title}")
     for detail in details:
         if detail:
             print("          " + compact(detail, 170), flush=True)
@@ -207,7 +275,7 @@ def render(record: Dict[str, Any], raw: bool = False) -> None:
     render_summary(level, title, details, stamp)
     if raw:
         raw_text = redact(json.dumps(record, ensure_ascii=False))
-        print(colorize("dim", "          RAW " + compact(raw_text, 900)), flush=True)
+        print_colored("dim", "          RAW " + compact(raw_text, 900))
 
 def read_recent(path: Path, count: int) -> Iterable[Dict[str, Any]]:
     if count <= 0 or not path.exists():
@@ -263,7 +331,7 @@ def parse_stream_line(line: str, state: Dict[str, Any]) -> bool:
             result = json.loads(raw.strip())
         except Exception:
             if RAW_MODE:
-                print(colorize("dim", "RAW " + compact(raw, 900)), flush=True)
+                print_colored("dim", "RAW " + compact(raw, 900))
             return False
         state["awaiting_completion"] = None
         _stream_complete(str(awaiting), result, state)
@@ -299,7 +367,7 @@ def parse_stream_line(line: str, state: Dict[str, Any]) -> bool:
             details.append("会话：" + origin)
         render_summary("info", "开始 · " + title, details)
         if RAW_MODE:
-            print(colorize("dim", "RAW " + compact(raw, 900)), flush=True)
+            print_colored("dim", "RAW " + compact(raw, 900))
         return False
 
     completed = re.search(r"Tool call\s+([A-Za-z0-9_]+)\s+completed:\s*(.*)$", raw)
@@ -315,7 +383,7 @@ def parse_stream_line(line: str, state: Dict[str, Any]) -> bool:
                 result = {"content": [{"type": "text", "text": payload}]}
             _stream_complete(tool, result, state)
         if RAW_MODE:
-            print(colorize("dim", "RAW " + compact(raw, 900)), flush=True)
+            print_colored("dim", "RAW " + compact(raw, 900))
         return False
 
     low = raw.lower()
@@ -326,7 +394,7 @@ def parse_stream_line(line: str, state: Dict[str, Any]) -> bool:
     elif low.startswith("warning"):
         render_summary("warn", "Remote 警告", [raw])
     elif RAW_MODE:
-        print(colorize("dim", "RAW " + compact(raw, 900)), flush=True)
+        print_colored("dim", "RAW " + compact(raw, 900))
     return False
 
 def stream_follow(path: Path, status: Path | None) -> int:
@@ -391,7 +459,7 @@ def handle_keys() -> bool:
             return False
         if key == "r":
             RAW_MODE = not RAW_MODE
-            print(colorize("info", f"RAW 模式：{'开' if RAW_MODE else '关'}"), flush=True)
+            print_colored("info", f"RAW 模式：{'开' if RAW_MODE else '关'}")
         elif key == "c":
             os.system("cls")
             banner()
@@ -421,7 +489,7 @@ def follow(path: Path, replay: int, session_pid: int, status: Path | None) -> in
             if not handle_keys():
                 return 0
             if session_pid and not pid_alive(session_pid):
-                print(colorize("warn", "Remote 已结束，监控窗口即将关闭。"))
+                print_colored("warn", "Remote 已结束，监控窗口即将关闭。")
                 write_status(status, running=False, remotePid=session_pid, events=count)
                 time.sleep(3)
                 return 0
@@ -457,6 +525,7 @@ def main() -> int:
     parser.add_argument("--status", type=Path)
     args = parser.parse_args()
 
+    enable_virtual_terminal()
     banner()
     if args.stream_log:
         return stream_follow(args.stream_log, args.status)
