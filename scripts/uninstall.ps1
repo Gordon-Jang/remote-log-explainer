@@ -16,9 +16,14 @@ if (Test-Path $LegacyStartup) {
     Remove-Item $LegacyStartup -Force
 }
 
+$hookUninstaller = Join-Path $Dest "scripts\uninstall-command-hooks.ps1"
+if (Test-Path $hookUninstaller) {
+    & $hookUninstaller
+}
+
 if (Test-Path $Dest) {
     Remove-Item $Dest -Recurse -Force
 }
 
-Write-Host "Remote Log Explainer runtime removed."
+Write-Host "Remote Log Explainer runtime and command hooks removed."
 Write-Host "Source repository was left untouched."

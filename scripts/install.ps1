@@ -36,11 +36,14 @@ Copy-Item (Join-Path $PSScriptRoot "start-stream-monitor.ps1") (Join-Path $Dest 
 Copy-Item (Join-Path $PSScriptRoot "run-remote.ps1") (Join-Path $Dest "scripts\run-remote.ps1") -Force
 Copy-Item (Join-Path $PSScriptRoot "attach-monitor.ps1") (Join-Path $Dest "scripts\attach-monitor.ps1") -Force
 Copy-Item (Join-Path $PSScriptRoot "remote-with-monitor.ps1") (Join-Path $Dest "scripts\remote-with-monitor.ps1") -Force
+Copy-Item (Join-Path $PSScriptRoot "install-command-hooks.ps1") (Join-Path $Dest "scripts\install-command-hooks.ps1") -Force
+Copy-Item (Join-Path $PSScriptRoot "uninstall-command-hooks.ps1") (Join-Path $Dest "scripts\uninstall-command-hooks.ps1") -Force
 Copy-Item (Join-Path $PSScriptRoot "uninstall.ps1") (Join-Path $Dest "scripts\uninstall.ps1") -Force
 Copy-Item (Join-Path $SourceRoot "VERSION") (Join-Path $Dest "VERSION") -Force
+
+& (Join-Path $Dest "scripts\install-command-hooks.ps1")
 
 Write-Host "Installed: $Dest"
 Write-Host "No Startup entry was created."
 Write-Host "No hidden watcher was started."
-Write-Host "Attach existing Remote with scripts\attach-monitor.ps1"
-Write-Host "Start Remote + monitor with scripts\remote-with-monitor.ps1"
+Write-Host "Both 'remote' and the normal Desktop Commander npx command now open the monitor."
