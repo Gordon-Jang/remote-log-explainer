@@ -1,3 +1,7 @@
 __pycache__/
 *.pyc
 runtime/
+
+# Local workspace/deployment metadata; keep on the development machine only.
+remote-log-explainer_CopyTo.md
+setup_Git.md
