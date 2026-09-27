@@ -13,7 +13,7 @@ $existing = Get-CimInstance Win32_Process | Where-Object {
 } | Sort-Object ProcessId | Select-Object -First 1
 
 if ($existing) {
-    Write-Host "Remote is already running (PID $($existing.ProcessId)); attaching history monitor."
+    Write-Host "Remote is already running (PID $($existing.ProcessId)); attaching monitor."
     & (Join-Path $InstallRoot "scripts\attach-monitor.ps1") -InstallRoot $InstallRoot
     exit $LASTEXITCODE
 }
@@ -26,14 +26,22 @@ $monitorScript = Join-Path $InstallRoot "scripts\start-stream-monitor.ps1"
 
 New-Item -ItemType Directory -Force -Path $streamDir | Out-Null
 
-$remoteArgs = '-NoExit -NoProfile -ExecutionPolicy Bypass -File "' + $runScript +
-    '" -SessionId "' + $sessionId + '" -InstallRoot "' + $InstallRoot + '"'
-$monitorArgs = '-NoProfile -ExecutionPolicy Bypass -File "' + $monitorScript +
-    '" -LogPath "' + $log + '" -InstallRoot "' + $InstallRoot + '"'
+$wt = Get-Command wt.exe -ErrorAction SilentlyContinue
+if ($wt) {
+    & $wt.Source -w new new-tab powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File $runScript -SessionId $sessionId -InstallRoot $InstallRoot
+    Start-Sleep -Milliseconds 500
+    & $wt.Source -w new new-tab powershell.exe -NoProfile -ExecutionPolicy Bypass -File $monitorScript -LogPath $log -InstallRoot $InstallRoot
+    Write-Host "Opened Desktop Commander Remote + Remote Monitor in Windows Terminal."
+} else {
+    $remoteArgs = '-NoExit -NoProfile -ExecutionPolicy Bypass -File "' + $runScript +
+        '" -SessionId "' + $sessionId + '" -InstallRoot "' + $InstallRoot + '"'
+    $monitorArgs = '-NoProfile -ExecutionPolicy Bypass -File "' + $monitorScript +
+        '" -LogPath "' + $log + '" -InstallRoot "' + $InstallRoot + '"'
 
-Start-Process -FilePath "powershell.exe" -ArgumentList $remoteArgs | Out-Null
-Start-Sleep -Milliseconds 400
-Start-Process -FilePath "powershell.exe" -ArgumentList $monitorArgs | Out-Null
+    Start-Process -FilePath "powershell.exe" -ArgumentList $remoteArgs | Out-Null
+    Start-Sleep -Milliseconds 400
+    Start-Process -FilePath "powershell.exe" -ArgumentList $monitorArgs | Out-Null
+    Write-Host "Windows Terminal was not found; using classic console fallback."
+}
 
-Write-Host "Opened visible Remote + Remote Monitor."
 Write-Host "Session: $sessionId"

@@ -232,16 +232,23 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
 
 ## 11. 控制台背景与滚动
 
-Remote 和 Monitor 默认都会设置为：
+Remote 和 Monitor 现在会优先在 Windows Terminal 中打开。
+
+原因是经典 Windows 控制台（conhost）使用固定高度的屏幕缓冲区，即使没有真实输出，也可能存在大量空白缓冲行，看起来像“还能一直滚到纯背景”。这些空白并不是历史日志。
+
+Windows Terminal 使用动态滚动历史：只有真正产生的输出才进入 scrollback，因此不会为了预分配缓冲区而出现大段空白。
+
+当前行为：
 
 - 黑色背景
 - 灰色普通文字
 - 状态行继续使用绿色 / 青色 / 紫色 / 黄色 / 红色
-- 不修改终端自身的历史长度或滚动缓冲配置
+- 不人为限制历史长度
+- 不修改 BufferSize
+- 不使用 Clear-Host 制造额外空白
+- Windows Terminal 不可用时才回退到经典控制台
 
-早期版本曾把控制台 BufferSize 强制设为固定高度，这会产生大量“输出下面的空白区域”，看起来像还能无限向下滚。当前版本已移除这项设置，只保留颜色配置。
-
-因此历史长度继续由 Windows Terminal / PowerShell 自己管理，不会因为本项目而被限制。
+历史长度仍由 Windows Terminal 自己的设置管理，本项目不截断历史。
 
 ## 12. Monitor 没有颜色
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.4
+
+- 修复经典 Windows 控制台固定 BufferSize 导致可滚动空白背景的问题。
+- Remote 与 Monitor 优先在 Windows Terminal 中启动，使用动态 scrollback。
+- 不限制历史长度，也不再修改 BufferSize。
+- 移除 Clear-Host；Windows Terminal 下用 OSC 设置默认黑色背景，避免额外生成空白行。
+- Windows Terminal 不可用时保留经典控制台回退。
+
 ## v0.3.3
 
 - 修复 v0.3.2 把控制台 BufferSize 固定为 1000 行后产生大量可滚动空白的问题。

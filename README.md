@@ -4,7 +4,7 @@
 
 它把 Remote 控制台里的工具调用、JSON、进程状态和常见错误，转换成更接近 Codex 的中文实时反馈；默认 **0 大模型、0 云端日志分析、0 后台驻留**。
 
-当前版本：`v0.3.3`
+当前版本：`v0.3.4`
 
 ## 主要特点
 
@@ -16,7 +16,7 @@
 - 支持 `origin_instance`，新会话模式可区分不同 Remote 来源。
 - 常见 API key、token、Authorization、password 会在显示前脱敏。
 - Windows 控制台颜色兼容：绿色成功、青色信息、紫色运行中、黄色警告、红色错误、灰色辅助信息。
-- Remote 与 Monitor 默认使用黑色背景，但不修改终端历史长度；避免人为放大控制台缓冲区造成大量可滚动空白。
+- Remote 与 Monitor 优先在 Windows Terminal 中启动：历史按实际输出动态增长，不预分配大量空白缓冲区；同时不限制历史长度。
 - 不写 Windows Startup、不创建计划任务、不启动隐藏 watcher。
 
 ## 效果示例

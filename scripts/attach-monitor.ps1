@@ -26,7 +26,7 @@ $monitorScript = Join-Path $InstallRoot "src\remote_log.py"
 $existing = Get-CimInstance Win32_Process | Where-Object {
     $_.CommandLine -and
     $_.CommandLine -match [Regex]::Escape($monitorScript) -and
-    $_.CommandLine -match '--follow'
+    $_.CommandLine -match '(--follow|--stream-log)'
 } | Select-Object -First 1
 
 if ($existing) {
@@ -40,8 +40,13 @@ if (-not (Test-Path $startScript)) {
     exit 3
 }
 
-$argLine = '-NoProfile -ExecutionPolicy Bypass -File "' + $startScript + '" -RemotePid ' +
-    [string]$remote.ProcessId + ' -InstallRoot "' + $InstallRoot + '"'
+$wt = Get-Command wt.exe -ErrorAction SilentlyContinue
+if ($wt) {
+    & $wt.Source -w new new-tab powershell.exe -NoProfile -ExecutionPolicy Bypass -File $startScript -RemotePid $remote.ProcessId -InstallRoot $InstallRoot
+} else {
+    $argLine = '-NoProfile -ExecutionPolicy Bypass -File "' + $startScript + '" -RemotePid ' +
+        [string]$remote.ProcessId + ' -InstallRoot "' + $InstallRoot + '"'
+    Start-Process -FilePath "powershell.exe" -ArgumentList $argLine | Out-Null
+}
 
-Start-Process -FilePath "powershell.exe" -ArgumentList $argLine | Out-Null
 Write-Host "Opened Remote Monitor for Remote PID $($remote.ProcessId)."
