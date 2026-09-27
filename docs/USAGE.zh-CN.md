@@ -230,7 +230,20 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
 
 即可重新安装入口。
 
-## 11. Monitor 没有颜色
+## 11. 控制台背景与滚动历史
+
+Remote 和 Monitor 默认都会设置为：
+
+- 黑色背景
+- 灰色普通文字
+- 状态行继续使用绿色 / 青色 / 紫色 / 黄色 / 红色
+- 控制台缓冲区最多保留 1000 行
+
+当输出超过 1000 行后，最旧的控制台内容会被自动丢弃，因此窗口不会再无限向下积累历史。
+
+这个限制只影响终端可滚动历史，不影响当前 Remote 任务本身。
+
+## 12. Monitor 没有颜色
 
 正常颜色：
 
@@ -252,7 +265,7 @@ Windows 上程序会优先开启 VT/ANSI 模式；如果控制台不支持，会
 
 说明终端把 ANSI 转义码当成普通文本。请确认你使用的是当前版本，并重新运行安装脚本。
 
-## 12. 手动附加 Monitor
+## 13. 手动附加 Monitor
 
 如果你明确希望给一个已经运行的 Remote 开监控：
 
@@ -262,7 +275,7 @@ powershell -ExecutionPolicy Bypass -File "$HOME\.remote-log-explainer\scripts\at
 
 该模式属于共享 history 兼容模式。
 
-## 13. 手动启动完整流程
+## 14. 手动启动完整流程
 
 不经过 `remote` 命令也可以：
 
@@ -270,7 +283,7 @@ powershell -ExecutionPolicy Bypass -File "$HOME\.remote-log-explainer\scripts\at
 powershell -ExecutionPolicy Bypass -File "$HOME\.remote-log-explainer\scripts\remote-with-monitor.ps1"
 ```
 
-## 14. 更新
+## 15. 更新
 
 ```powershell
 cd <仓库目录>
@@ -278,7 +291,7 @@ git pull
 powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
 
-## 15. 卸载
+## 16. 卸载
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File "$HOME\.remote-log-explainer\scripts\uninstall.ps1"
@@ -288,7 +301,7 @@ powershell -ExecutionPolicy Bypass -File "$HOME\.remote-log-explainer\scripts\un
 
 如果源码是通过 Git clone 得到的，源码目录不会被卸载脚本删除。
 
-## 16. 开发测试
+## 17. 开发测试
 
 ```powershell
 python -m py_compile .\src\remote_log.py .\src\remote_runner.py

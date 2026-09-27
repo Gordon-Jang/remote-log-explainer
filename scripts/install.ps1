@@ -33,6 +33,7 @@ New-Item -ItemType Directory -Force -Path (Join-Path $Dest "runtime") | Out-Null
 Copy-Item (Join-Path $SourceRoot "src\*") (Join-Path $Dest "src") -Force
 Copy-Item (Join-Path $PSScriptRoot "start-monitor.ps1") (Join-Path $Dest "scripts\start-monitor.ps1") -Force
 Copy-Item (Join-Path $PSScriptRoot "start-stream-monitor.ps1") (Join-Path $Dest "scripts\start-stream-monitor.ps1") -Force
+Copy-Item (Join-Path $PSScriptRoot "console-style.ps1") (Join-Path $Dest "scripts\console-style.ps1") -Force
 Copy-Item (Join-Path $PSScriptRoot "run-remote.ps1") (Join-Path $Dest "scripts\run-remote.ps1") -Force
 Copy-Item (Join-Path $PSScriptRoot "attach-monitor.ps1") (Join-Path $Dest "scripts\attach-monitor.ps1") -Force
 Copy-Item (Join-Path $PSScriptRoot "remote-with-monitor.ps1") (Join-Path $Dest "scripts\remote-with-monitor.ps1") -Force
