@@ -1,5 +1,10 @@
 # Remote Log Explainer
 
+[![Windows](https://img.shields.io/badge/Windows-10%2F11-blue)](https://github.com/Gordon-Jang/remote-log-explainer)
+[![Tests](https://github.com/Gordon-Jang/remote-log-explainer/actions/workflows/test.yml/badge.svg)](https://github.com/Gordon-Jang/remote-log-explainer/actions/workflows/test.yml)
+[![License](https://img.shields.io/github/license/Gordon-Jang/remote-log-explainer)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/Gordon-Jang/remote-log-explainer)](https://github.com/Gordon-Jang/remote-log-explainer/releases)
+
 一个面向 Windows 的 Desktop Commander Remote 本地实时日志解释器。
 
 它把 Remote 控制台里的工具调用、JSON、进程状态和常见错误，转换成更接近 Codex 的中文实时反馈；默认 **0 大模型、0 云端日志分析、0 后台驻留**。
