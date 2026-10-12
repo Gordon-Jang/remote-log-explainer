@@ -1,5 +1,6 @@
 param(
-    [string]$InstallRoot = (Join-Path $HOME ".remote-log-explainer")
+    [string]$InstallRoot = (Join-Path $HOME ".remote-log-explainer"),
+    [string]$PackageSpec = "@wonderwhy-er/desktop-commander@latest"
 )
 
 $ErrorActionPreference = "Stop"
@@ -7,7 +8,7 @@ $ErrorActionPreference = "Stop"
 $existing = Get-CimInstance Win32_Process | Where-Object {
     $c = $_.CommandLine
     $c -and (
-        $c -match '(?i)@wonderwhy-er[/\\]desktop-commander(@latest)?\s+remote' -or
+        $c -match '(?i)@wonderwhy-er[/\\]desktop-commander(?:@[^\s]+)?\s+remote' -or
         $c -match '(?i)desktop-commander(?:\.cmd)?\s+remote'
     )
 } | Sort-Object ProcessId | Select-Object -First 1
@@ -28,13 +29,14 @@ New-Item -ItemType Directory -Force -Path $streamDir | Out-Null
 
 $wt = Get-Command wt.exe -ErrorAction SilentlyContinue
 if ($wt) {
-    & $wt.Source -w new new-tab powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File $runScript -SessionId $sessionId -InstallRoot $InstallRoot
+    & $wt.Source -w new new-tab powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File $runScript -SessionId $sessionId -InstallRoot $InstallRoot -PackageSpec $PackageSpec
     Start-Sleep -Milliseconds 500
     & $wt.Source -w new new-tab powershell.exe -NoProfile -ExecutionPolicy Bypass -File $monitorScript -LogPath $log -InstallRoot $InstallRoot
     Write-Host "Opened Desktop Commander Remote + Remote Monitor in Windows Terminal."
 } else {
     $remoteArgs = '-NoExit -NoProfile -ExecutionPolicy Bypass -File "' + $runScript +
-        '" -SessionId "' + $sessionId + '" -InstallRoot "' + $InstallRoot + '"'
+        '" -SessionId "' + $sessionId + '" -InstallRoot "' + $InstallRoot +
+        '" -PackageSpec "' + $PackageSpec + '"'
     $monitorArgs = '-NoProfile -ExecutionPolicy Bypass -File "' + $monitorScript +
         '" -LogPath "' + $log + '" -InstallRoot "' + $InstallRoot + '"'
 
@@ -45,3 +47,4 @@ if ($wt) {
 }
 
 Write-Host "Session: $sessionId"
+Write-Host "Package: $PackageSpec"

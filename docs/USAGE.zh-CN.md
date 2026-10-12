@@ -62,13 +62,21 @@ Remote 窗口保留原始输出，Monitor 窗口给出简化中文解释。
 npx @wonderwhy-er/desktop-commander@latest remote
 ```
 
-在 PowerShell 中，这条命令会被精确识别，并进入和 `remote` 相同的启动流程。
+或者显式指定版本：
 
-匹配只针对：
+```powershell
+npx --yes @wonderwhy-er/desktop-commander@0.2.52 remote
+```
+
+PowerShell hook 会识别 Desktop Commander 的 `remote` 启动，不要求固定版本，也允许带 `--yes` / `-y`。
+
+进入本项目启动器后，内部统一使用：
 
 ```text
-@wonderwhy-er/desktop-commander@latest remote
+npx --yes <你指定的 Desktop Commander package spec> remote
 ```
+
+因此当 npm 缓存失效、Desktop Commander 发布新版本或本机首次下载新版本时，不会卡在 `Need to install the following packages... Ok to proceed?` 这类交互确认上。
 
 普通命令例如：
 

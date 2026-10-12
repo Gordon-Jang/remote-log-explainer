@@ -9,12 +9,12 @@
 
 它把 Remote 控制台里的工具调用、JSON、进程状态和常见错误，转换成更接近 Codex 的中文实时反馈；默认 **0 大模型、0 云端日志分析、0 后台驻留**。
 
-当前版本：`v0.3.4`
+当前版本：`v0.3.5`
 
 ## 主要特点
 
 - 输入 `remote` 即可启动 Desktop Commander Remote + Remote Monitor。
-- 在 PowerShell 中输入原命令 `npx @wonderwhy-er/desktop-commander@latest remote` 也会自动带起 Monitor。
+- 在 PowerShell 中输入原命令 `npx @wonderwhy-er/desktop-commander@latest remote`，或显式版本命令如 `npx --yes @wonderwhy-er/desktop-commander@0.2.52 remote`，都会自动带起 Monitor。
 - Remote 已经运行时不会重复启动，只附加/复用一个 Monitor。
 - 规则解释优先：不调用大模型，不发送日志到外部服务。
 - 支持工具调用、文件操作、进程 PID、测试结果、超时、网络回退、Git 警告等常见状态。
@@ -22,6 +22,7 @@
 - 常见 API key、token、Authorization、password 会在显示前脱敏。
 - Windows 控制台颜色兼容：绿色成功、青色信息、紫色运行中、黄色警告、红色错误、灰色辅助信息。
 - Remote 与 Monitor 优先在 Windows Terminal 中启动：历史按实际输出动态增长，不预分配大量空白缓冲区；同时不限制历史长度。
+- 内部统一使用 `npx --yes`，避免 Desktop Commander 更新或 npm 缓存变化后卡在安装确认提示；显式指定的 Desktop Commander 版本会被保留。
 - 不写 Windows Startup、不创建计划任务、不启动隐藏 watcher。
 
 ## 效果示例

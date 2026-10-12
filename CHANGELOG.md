@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.3.5
+
+- 修复 `remote` 在 Desktop Commander 新版本首次下载时可能卡住的问题：内部统一改为 `npx --yes`。
+- 启动器不再假定固定版本；默认使用 `@latest`，也支持并保留显式版本，如 `@0.2.52`。
+- PowerShell 的 npx hook 现在可识别带 `--yes` / `-y` 和任意 Desktop Commander 版本的 remote 命令。
+- 新增 runner 单元测试，验证非交互启动与版本透传。
+
 ## v0.3.4
 
 - 修复经典 Windows 控制台固定 BufferSize 导致可滚动空白背景的问题。

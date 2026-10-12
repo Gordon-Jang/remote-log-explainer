@@ -8,7 +8,7 @@ function Get-RemoteProcess {
     $items = Get-CimInstance Win32_Process | Where-Object {
         $c = $_.CommandLine
         $c -and (
-            $c -match '(?i)@wonderwhy-er[/\\]desktop-commander(@latest)?\s+remote' -or
+            $c -match '(?i)@wonderwhy-er[/\\]desktop-commander(?:@[^\s]+)?\s+remote' -or
             $c -match '(?i)desktop-commander[/\\]dist[/\\]index\.js[" ]+\s*remote' -or
             $c -match '(?i)desktop-commander(?:\.cmd)?\s+remote'
         )

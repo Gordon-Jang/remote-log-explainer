@@ -1,7 +1,8 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$SessionId,
-    [string]$InstallRoot = (Join-Path $HOME ".remote-log-explainer")
+    [string]$InstallRoot = (Join-Path $HOME ".remote-log-explainer"),
+    [string]$PackageSpec = "@wonderwhy-er/desktop-commander@latest"
 )
 
 $ErrorActionPreference = "Stop"
@@ -19,10 +20,11 @@ New-Item -ItemType Directory -Force -Path $streamDir | Out-Null
 
 Write-Host "Desktop Commander Remote"
 Write-Host "Session: $SessionId"
+Write-Host "Package: $PackageSpec"
 Write-Host "Log: $log"
 Write-Host ("-" * 60)
 
-python $runner --log $log --meta $meta
+python $runner --log $log --meta $meta --package-spec $PackageSpec
 $code = $LASTEXITCODE
 Write-Host ("Remote exited with code " + $code)
 exit $code
