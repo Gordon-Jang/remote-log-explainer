@@ -16,7 +16,7 @@ jobs:
 
       - name: Python compile
         shell: pwsh
-        run: python -m py_compile .\src\remote_log.py .\src\remote_runner.py .\src\lock_inspector.py
+        run: python -m py_compile .\src\remote_log.py .\src\remote_runner.py
 
       - name: Unit tests
         shell: pwsh

@@ -5,7 +5,6 @@ if ($npx) {
     $nodeDir = Split-Path $npx -Parent
     $backup = Join-Path $nodeDir "npx.remote-log-backup.ps1"
     $remoteCmd = Join-Path $nodeDir "remote.cmd"
-    $lockWhoCmd = Join-Path $nodeDir "lockwho.cmd"
 
     if (Test-Path $backup) {
         Copy-Item $backup $npx -Force
@@ -18,14 +17,6 @@ if ($npx) {
         if ($remoteText -match 'remote-log-explainer') {
             Remove-Item $remoteCmd -Force
             Write-Host "Removed remote.cmd"
-        }
-    }
-
-    if (Test-Path $lockWhoCmd) {
-        $lockWhoText = Get-Content $lockWhoCmd -Raw
-        if ($lockWhoText -match 'remote-log-explainer') {
-            Remove-Item $lockWhoCmd -Force
-            Write-Host "Removed lockwho.cmd"
         }
     }
 }

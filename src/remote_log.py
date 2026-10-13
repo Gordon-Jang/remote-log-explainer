@@ -31,23 +31,6 @@ WIN_FG = {
 }
 ICONS = {"ok": "✓", "info": "•", "wait": "⏳", "warn": "⚠", "error": "✗", "dim": "·"}
 RAW_MODE = False
-LAST_LOCK_PATH: str | None = None
-LAST_LOCK_RESULTS: List[Dict[str, Any]] = []
-
-LOCK_ERROR_MARKERS = (
-    "winerror 32",
-    "error_sharing_violation",
-    "sharing violation",
-    "being used by another process",
-    "used by another process",
-    "another process is using",
-    "进程无法访问文件，因为它正由另一进程使用",
-    "无法访问文件，因为它正由另一个进程使用",
-    "文件正由另一个进程使用",
-    "另一个程序正在使用此文件",
-    "另一个进程正在使用",
-    "文件夹正在使用",
-)
 VT_ENABLED = os.name != "nt"
 
 def enable_virtual_terminal() -> bool:
@@ -98,114 +81,6 @@ def output_text(record: Dict[str, Any]) -> str:
         if isinstance(part, dict) and part.get("type") == "text":
             pieces.append(str(part.get("text") or ""))
     return "\n".join(pieces)
-def _lock_error_path(record: Dict[str, Any]) -> str | None:
-    text = output_text(record)
-    low = text.lower()
-    if not any(marker in low for marker in LOCK_ERROR_MARKERS):
-        return None
-
-    args = record.get("arguments") or {}
-    candidates: List[str] = []
-    for key in ("path", "file_path", "source", "destination"):
-        value = args.get(key)
-        if isinstance(value, str):
-            candidates.append(value)
-    paths = args.get("paths")
-    if isinstance(paths, list):
-        candidates.extend(str(x) for x in paths if isinstance(x, str))
-
-    command = args.get("command")
-    if isinstance(command, str):
-        candidates.extend(
-            m.group(1)
-            for m in re.finditer(r'(?i)["\']?([A-Z]:\\[^"\'\r\n]+)', command)
-        )
-
-    candidates.extend(
-        m.group(1).rstrip(" .,:;)]}")
-        for m in re.finditer(r'(?i)([A-Z]:\\[^"\'\r\n]+)', text)
-    )
-
-    for candidate in candidates:
-        expanded = os.path.abspath(os.path.expandvars(os.path.expanduser(candidate.strip())))
-        if os.path.exists(expanded):
-            return expanded
-    return None
-
-
-def _capture_lock_hint(record: Dict[str, Any]) -> None:
-    global LAST_LOCK_PATH, LAST_LOCK_RESULTS
-    path = _lock_error_path(record)
-    if not path:
-        return
-    LAST_LOCK_PATH = path
-    LAST_LOCK_RESULTS = []
-    print_colored("warn", f"检测到文件/目录占用：{path}")
-    print("          按 L 查看占用进程；查看后按 K 可选择终止进程。", flush=True)
-
-
-def _inspect_last_lock() -> None:
-    global LAST_LOCK_RESULTS
-    if not LAST_LOCK_PATH:
-        print_colored("warn", "还没有捕获到可定位的文件占用路径。")
-        print("          也可以手动执行：lockwho <文件或文件夹路径>", flush=True)
-        return
-    try:
-        import lock_inspector
-        print_colored("info", f"正在检查占用：{LAST_LOCK_PATH}")
-        LAST_LOCK_RESULTS = lock_inspector.find_locking_processes(LAST_LOCK_PATH)
-        lock_inspector.print_results(LAST_LOCK_PATH, LAST_LOCK_RESULTS)
-        if LAST_LOCK_RESULTS:
-            print_colored("warn", "按 K 可选择并终止占用进程（终止前会再次确认）。")
-    except Exception as exc:
-        print_colored("error", f"占用检查失败：{exc}")
-
-
-def _kill_last_lock() -> None:
-    global LAST_LOCK_RESULTS
-    if not LAST_LOCK_PATH:
-        print_colored("warn", "还没有捕获到文件占用路径。")
-        return
-    if not LAST_LOCK_RESULTS:
-        _inspect_last_lock()
-    if not LAST_LOCK_RESULTS:
-        return
-    try:
-        import lock_inspector
-        allowed = {int(item["pid"]): item for item in LAST_LOCK_RESULTS}
-        if len(allowed) == 1:
-            pid = next(iter(allowed))
-        else:
-            print("可终止的占用进程：", flush=True)
-            for item in LAST_LOCK_RESULTS:
-                print(f"  PID {item['pid']}  {item['name']}", flush=True)
-            raw = input("输入要终止的 PID（直接回车取消）：").strip()
-            if not raw:
-                print("已取消。", flush=True)
-                return
-            pid = int(raw)
-            if pid not in allowed:
-                print_colored("error", "该 PID 不在本次占用列表中。")
-                return
-        item = allowed[pid]
-        answer = input(
-            f"确认终止 {item['name']} (PID {pid})？未保存数据可能丢失 [y/N] "
-        ).strip().lower()
-        if answer not in {"y", "yes"}:
-            print("已取消。", flush=True)
-            return
-        ok, message = lock_inspector.terminate_process(pid)
-        print_colored("ok" if ok else "error", message)
-        if ok:
-            LAST_LOCK_RESULTS = [
-                x for x in LAST_LOCK_RESULTS if int(x.get("pid", -1)) != pid
-            ]
-    except (ValueError, EOFError):
-        print_colored("warn", "已取消终止操作。")
-    except Exception as exc:
-        print_colored("error", f"终止进程失败：{exc}")
-
-
 def display_time(value: str) -> str:
     try:
         dt = datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone()
@@ -401,7 +276,6 @@ def render(record: Dict[str, Any], raw: bool = False) -> None:
     if raw:
         raw_text = redact(json.dumps(record, ensure_ascii=False))
         print_colored("dim", "          RAW " + compact(raw_text, 900))
-    _capture_lock_hint(record)
 
 def read_recent(path: Path, count: int) -> Iterable[Dict[str, Any]]:
     if count <= 0 or not path.exists():
@@ -438,7 +312,6 @@ def _stream_complete(tool: str, result: Dict[str, Any], state: Dict[str, Any]) -
     if origin:
         details.append("会话：" + origin)
     render_summary(level, title, details)
-    _capture_lock_hint(record)
 
 def parse_stream_line(line: str, state: Dict[str, Any]) -> bool:
     raw = line.rstrip("\r\n")
@@ -590,10 +463,6 @@ def handle_keys() -> bool:
         elif key == "c":
             os.system("cls")
             banner()
-        elif key == "l":
-            _inspect_last_lock()
-        elif key == "k":
-            _kill_last_lock()
     except Exception:
         pass
     return True
@@ -602,7 +471,7 @@ def banner() -> None:
     if sys.stdout.isatty():
         print("\033]0;Remote Monitor\007", end="")
     print("Remote Monitor  ·  规则解释器（0 模型）")
-    print("R 原始 JSON   L 占用定位   K 终止占用进程   C 清屏   Q 退出")
+    print("R 原始 JSON   C 清屏   Q 退出")
     print("─" * 62)
 def follow(path: Path, replay: int, session_pid: int, status: Path | None) -> int:
     for record in read_recent(path, replay):

@@ -4,7 +4,6 @@ $npx = (Get-Command npx.ps1 -CommandType ExternalScript -ErrorAction Stop | Sele
 $nodeDir = Split-Path $npx -Parent
 $backup = Join-Path $nodeDir "npx.remote-log-backup.ps1"
 $remoteCmd = Join-Path $nodeDir "remote.cmd"
-$lockWhoCmd = Join-Path $nodeDir "lockwho.cmd"
 
 $text = Get-Content $npx -Raw
 $marker = "# Remote Log Explainer hook:"
@@ -57,15 +56,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.remote-l
 '@
 Set-Content -Path $remoteCmd -Value $remoteText -Encoding ASCII
 
-$lockWhoText = @'
-@echo off
-python.exe "%USERPROFILE%\.remote-log-explainer\src\lock_inspector.py" %*
-'@
-Set-Content -Path $lockWhoCmd -Value $lockWhoText -Encoding ASCII
-
 Write-Host "Command hooks installed:"
 Write-Host "  remote"
-Write-Host "  lockwho <file-or-folder>"
 Write-Host "  npx @wonderwhy-er/desktop-commander@latest remote"
 Write-Host "  npx --yes @wonderwhy-er/desktop-commander@<version> remote"
 Write-Host "All launch paths use npx --yes internally to avoid install-confirmation hangs."
