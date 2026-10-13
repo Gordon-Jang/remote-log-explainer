@@ -9,7 +9,7 @@
 
 它把 Remote 控制台里的工具调用、JSON、进程状态和常见错误，转换成更接近 Codex 的中文实时反馈；默认 **0 大模型、0 云端日志分析、0 后台驻留**。
 
-当前版本：`v0.3.5`
+当前版本：`v0.4.0`
 
 ## 主要特点
 
@@ -23,6 +23,8 @@
 - Windows 控制台颜色兼容：绿色成功、青色信息、紫色运行中、黄色警告、红色错误、灰色辅助信息。
 - Remote 与 Monitor 优先在 Windows Terminal 中启动：历史按实际输出动态增长，不预分配大量空白缓冲区；同时不限制历史长度。
 - 内部统一使用 `npx --yes`，避免 Desktop Commander 更新或 npm 缓存变化后卡在安装确认提示；显式指定的 Desktop Commander 版本会被保留。
+- 新增文件/文件夹占用定位：`lockwho <path>` 可查看占用程序、PID 与程序路径，也可在确认后终止进程。
+- Monitor 会识别常见文件占用错误并记住最近路径：按 `L` 一键查看占用，按 `K` 选择终止占用进程。
 - 不写 Windows Startup、不创建计划任务、不启动隐藏 watcher。
 
 ## 效果示例
@@ -103,8 +105,39 @@ npx @wonderwhy-er/desktop-commander@latest remote
 Monitor 快捷键：
 
 - `R`：显示 / 隐藏原始 JSON 或原始 Remote 行
+- `L`：查看最近一次文件/文件夹占用错误对应的占用进程
+- `K`：选择并终止最近一次占用列表中的进程（会二次确认）
 - `C`：清屏
 - `Q`：退出 Monitor
+
+## 文件 / 文件夹占用定位
+
+手动检查：
+
+```powershell
+lockwho "C:\path\to\file-or-folder"
+```
+
+示例输出：
+
+```text
+占用检查：C:\work\project
+[1] Code.exe  PID 12345
+    程序：C:\Users\...\Code.exe
+    占用：C:\work\project\data.db
+```
+
+确认后终止指定占用进程：
+
+```powershell
+lockwho "C:\work\project" --kill 12345
+```
+
+脚本会再次询问确认；明确需要非交互执行时才使用 `--yes`。
+
+文件检查优先使用 Windows 自带 Restart Manager。文件夹检查使用微软官方 Sysinternals Handle：安装器从 `download.sysinternals.com` 下载并验证 Microsoft Authenticode 签名，仓库本身不包含该二进制。Sysinternals Handle 适用其自己的 Microsoft EULA，不属于本项目 MIT License，详见 [THIRD_PARTY.md](THIRD_PARTY.md)。
+
+Monitor 只能自动捕获**经过 Remote 日志的占用报错**。Windows Explorer 或其他桌面程序弹出的“文件正在使用”对话框不会被本项目偷偷监控；这种情况直接执行 `lockwho <路径>` 即可定位。
 
 更完整的安装、运行模式、更新和故障排查见：[docs/USAGE.zh-CN.md](docs/USAGE.zh-CN.md)。
 
@@ -187,7 +220,7 @@ python -m py_compile .\src\remote_log.py .\src\remote_runner.py
 python -m unittest discover -s tests -v
 ```
 
-当前测试：6 项单元测试。
+当前测试：11 项单元测试。
 
 项目还提供 GitHub Actions，在 Windows 环境执行 Python 编译、单元测试和 PowerShell 语法检查。
 
@@ -197,7 +230,8 @@ python -m unittest discover -s tests -v
 remote-log-explainer/
 ├─ src/
 │  ├─ remote_log.py
-│  └─ remote_runner.py
+│  ├─ remote_runner.py
+│  └─ lock_inspector.py
 ├─ scripts/
 │  ├─ install.ps1
 │  ├─ uninstall.ps1
@@ -208,7 +242,8 @@ remote-log-explainer/
 │  ├─ start-stream-monitor.ps1
 │  ├─ console-style.ps1
 │  ├─ install-command-hooks.ps1
-│  └─ uninstall-command-hooks.ps1
+│  ├─ uninstall-command-hooks.ps1
+│  └─ install-handle.ps1
 ├─ tests/
 ├─ docs/
 │  └─ USAGE.zh-CN.md

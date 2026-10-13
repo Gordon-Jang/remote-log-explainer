@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.4.0
+
+- 新增文件/文件夹占用定位：`lockwho <path>` 可显示占用程序、PID、程序路径和匹配句柄。
+- 文件检查优先使用 Windows Restart Manager；目录检查使用微软官方 Sysinternals Handle。
+- 安装器从 Microsoft 官方地址下载 `handle64.exe`，并验证 Authenticode 签名为 Microsoft Corporation；二进制不提交到仓库。
+- Remote Monitor 可自动识别 WinError 32 / sharing violation / “另一个进程正在使用”等占用错误，并记录相关路径。
+- Monitor 新增 `L` 热键查看最近一次占用，`K` 热键选择终止占用进程。
+- 终止操作必须二次确认，并拒绝终止关键 Windows 系统进程。
+- 新增手动终止：`lockwho <path> --kill <PID>`；可用 `--yes` 跳过 CLI 的确认。
+- 当前单元测试扩展到 11 项。
+
 ## v0.3.5
 
 - 修复 `remote` 在 Desktop Commander 新版本首次下载时可能卡住的问题：内部统一改为 `npx --yes`。

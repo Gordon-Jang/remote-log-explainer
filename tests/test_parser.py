@@ -91,5 +91,23 @@ class ParserTests(unittest.TestCase):
         self.assertTrue(done)
         self.assertIn("exit 0", buf.getvalue())
 
+    def test_lock_error_path_from_tool_args(self):
+        target = str(Path(__file__).resolve())
+        record = self.rec(
+            "write_file",
+            {"path": target},
+            "PermissionError: [WinError 32] The process cannot access the file because it is being used by another process",
+        )
+        self.assertEqual(remote_log._lock_error_path(record), target)
+
+    def test_plain_permission_denied_is_not_assumed_to_be_lock(self):
+        target = str(Path(__file__).resolve())
+        record = self.rec(
+            "write_file",
+            {"path": target},
+            "PermissionError: access denied",
+        )
+        self.assertIsNone(remote_log._lock_error_path(record))
+
 if __name__ == "__main__":
     unittest.main()

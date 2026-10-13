@@ -29,6 +29,7 @@ New-Item -ItemType Directory -Force -Path $Dest | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $Dest "src") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $Dest "scripts") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $Dest "runtime") | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $Dest "tools") | Out-Null
 
 Copy-Item (Join-Path $SourceRoot "src\*") (Join-Path $Dest "src") -Force
 Copy-Item (Join-Path $PSScriptRoot "start-monitor.ps1") (Join-Path $Dest "scripts\start-monitor.ps1") -Force
@@ -39,9 +40,11 @@ Copy-Item (Join-Path $PSScriptRoot "attach-monitor.ps1") (Join-Path $Dest "scrip
 Copy-Item (Join-Path $PSScriptRoot "remote-with-monitor.ps1") (Join-Path $Dest "scripts\remote-with-monitor.ps1") -Force
 Copy-Item (Join-Path $PSScriptRoot "install-command-hooks.ps1") (Join-Path $Dest "scripts\install-command-hooks.ps1") -Force
 Copy-Item (Join-Path $PSScriptRoot "uninstall-command-hooks.ps1") (Join-Path $Dest "scripts\uninstall-command-hooks.ps1") -Force
+Copy-Item (Join-Path $PSScriptRoot "install-handle.ps1") (Join-Path $Dest "scripts\install-handle.ps1") -Force
 Copy-Item (Join-Path $PSScriptRoot "uninstall.ps1") (Join-Path $Dest "scripts\uninstall.ps1") -Force
 Copy-Item (Join-Path $SourceRoot "VERSION") (Join-Path $Dest "VERSION") -Force
 
+& (Join-Path $Dest "scripts\install-handle.ps1") -InstallRoot $Dest
 & (Join-Path $Dest "scripts\install-command-hooks.ps1")
 
 Write-Host "Installed: $Dest"

@@ -168,10 +168,53 @@ Monitor 已存在 → 复用
 Monitor 窗口中：
 
 - `R`：切换 RAW 模式
+- `L`：检查最近一次捕获到的文件/文件夹占用
+- `K`：从最近一次占用列表中选择进程并终止；执行前会再次确认
 - `C`：清屏
 - `Q`：退出 Monitor
 
 RAW 模式用于查看被简化之前的 Remote 原始行或 JSON。
+
+## 文件 / 文件夹占用定位
+
+手动检查任意路径：
+
+```powershell
+lockwho "C:\path\to\file-or-folder"
+```
+
+文件检查会优先调用 Windows Restart Manager；目录检查会调用安装时验证过 Microsoft 数字签名的 Sysinternals Handle，因此既能看到直接打开的目录句柄，也能看到目录内部文件对应的占用。
+
+查看后可以终止指定进程：
+
+```powershell
+lockwho "C:\path\to\file-or-folder" --kill 12345
+```
+
+默认还会询问一次确认。只有你明确需要脚本化非交互执行时才使用：
+
+```powershell
+lockwho "C:\path\to\file-or-folder" --kill 12345 --yes
+```
+
+为了避免误操作，关键 Windows 系统进程会被拒绝终止。其他进程在终止前会提示“未保存数据可能丢失”。
+
+### Monitor 自动捕获
+
+当 Remote 工具输出包含 `WinError 32`、`sharing violation`、`being used by another process`、中文“另一个进程正在使用”等典型占用错误，而且能从工具参数或错误文本提取到实际路径时，Monitor 会显示：
+
+```text
+检测到文件/目录占用：C:\work\project\data.db
+按 L 查看占用进程；查看后按 K 可选择终止进程。
+```
+
+这里的“自动捕获”只针对**经过 Remote 日志的错误**。Windows Explorer、Office 或其他桌面程序自己弹出的“文件正在使用”窗口不会被后台监听；遇到这种情况直接把弹窗里的路径交给 `lockwho` 即可。
+
+### Sysinternals Handle
+
+安装器会从 Microsoft 官方地址下载 Handle，并要求 `handle64.exe` 的 Authenticode 签名状态为 Valid 且签名者为 Microsoft Corporation 后才安装。仓库不包含微软二进制文件；下载后的 EULA 会一并保存在运行目录。
+
+如果下载失败，单文件检查仍可使用 Windows Restart Manager；目录扫描会退回本地兼容扫描，但在句柄很多的电脑上速度会更慢。
 
 ## 8. 会话隔离
 
